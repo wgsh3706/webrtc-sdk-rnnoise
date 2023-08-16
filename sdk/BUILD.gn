@@ -143,12 +143,15 @@ if (is_ios || is_mac) {
       "objc/helpers/RTCDispatcher+Private.h",
       "objc/helpers/RTCDispatcher.h",
       "objc/helpers/RTCDispatcher.m",
+      "objc/helpers/RTCYUVHelper.h",
+      "objc/helpers/RTCYUVHelper.mm",
       "objc/helpers/scoped_cftyperef.h",
     ]
 
     deps = [
       ":base_objc",
       "../rtc_base:checks",
+      "//third_party/libyuv",
     ]
 
     absl_deps = [ "//third_party/abseil-cpp/absl/strings" ]
@@ -616,17 +619,13 @@ if (is_ios || is_mac) {
         "Metal.framework",
         "MetalKit.framework",
       ]
-      if (is_ios) {
+      if (is_ios || is_mac) {
         sources += [
           "objc/components/renderer/metal/RTCMTLVideoView.h",
           "objc/components/renderer/metal/RTCMTLVideoView.m",
         ]
       }
       if (is_mac) {
-        sources += [
-          "objc/components/renderer/metal/RTCMTLNSVideoView.h",
-          "objc/components/renderer/metal/RTCMTLNSVideoView.m",
-        ]
         frameworks += [ "AppKit.framework" ]
       }
       deps = [
@@ -682,6 +681,43 @@ if (is_ios || is_mac) {
         "../rtc_base/system:gcd_helpers",
       ]
     }
+    
+    rtc_library("desktopcapture_objc") {
+      visibility = [ "*" ]
+      sources = [
+        "objc/components/capturer/RTCDesktopCapturer+Private.h",
+        "objc/components/capturer/RTCDesktopCapturer.h",
+        "objc/components/capturer/RTCDesktopCapturer.mm",
+        "objc/components/capturer/RTCDesktopSource+Private.h",
+        "objc/components/capturer/RTCDesktopSource.h",
+        "objc/components/capturer/RTCDesktopSource.mm",
+        "objc/components/capturer/RTCDesktopMediaList+Private.h",
+        "objc/components/capturer/RTCDesktopMediaList.h",
+        "objc/components/capturer/RTCDesktopMediaList.mm",
+        "objc/native/src/objc_desktop_capture.h",
+        "objc/native/src/objc_desktop_capture.mm",
+        "objc/native/src/objc_desktop_media_list.h",
+        "objc/native/src/objc_desktop_media_list.mm",
+      ]
+      frameworks = [ 
+        "AppKit.framework",
+      ]
+
+      configs += [ "..:common_objc" ]
+
+      public_configs = [ ":common_config_objc" ]
+
+      deps = [
+        ":base_objc",
+        ":helpers_objc",
+        ":videoframebuffer_objc",
+        "../rtc_base/system:gcd_helpers",
+        "../modules/desktop_capture",
+      ]
+      if(is_mac) {
+        deps += [ "//third_party:jpeg", ]
+      }
+    }
 
     rtc_library("videocodec_objc") {
       visibility = [ "*" ]
@@ -722,6 +758,7 @@ if (is_ios || is_mac) {
       ]
 
       deps = [
+        ":simulcast",
         ":base_objc",
         ":native_video",
         ":videocodec_objc",
@@ -823,6 +860,22 @@ if (is_ios || is_mac) {
       ]
     }
 
+    rtc_library("simulcast") {
+      sources = [
+        "objc/components/video_codec/RTCVideoEncoderFactorySimulcast.h",
+        "objc/components/video_codec/RTCVideoEncoderFactorySimulcast.mm",
+        "objc/api/video_codec/RTCVideoEncoderSimulcast.h",
+        "objc/api/video_codec/RTCVideoEncoderSimulcast.mm",
+      ]
+
+      deps = [
+        ":base_objc",
+        ":wrapped_native_codec_objc",
+        "../media:rtc_media_base",
+        "../media:rtc_simulcast_encoder_adapter",
+      ]
+    }
+  
     rtc_library("mediaconstraints_objc") {
       configs += [ "..:no_global_constructors" ]
       sources = [
@@ -924,6 +977,11 @@ if (is_ios || is_mac) {
       ]
       configs += [ "..:no_global_constructors" ]
       sources = [
+        "objc/api/peerconnection/RTCAudioDeviceModule.h",
+        "objc/api/peerconnection/RTCAudioDeviceModule+Private.h",
+        "objc/api/peerconnection/RTCAudioDeviceModule.mm",
+        "objc/api/peerconnection/RTCIODevice.h",
+        "objc/api/peerconnection/RTCIODevice.mm",
         "objc/api/peerconnection/RTCAudioSource+Private.h",
         "objc/api/peerconnection/RTCAudioSource.h",
         "objc/api/peerconnection/RTCAudioSource.mm",
@@ -949,6 +1007,12 @@ if (is_ios || is_mac) {
         "objc/api/peerconnection/RTCDtmfSender.mm",
         "objc/api/peerconnection/RTCFieldTrials.h",
         "objc/api/peerconnection/RTCFieldTrials.mm",
+        "objc/api/peerconnection/RTCFrameCryptor+Private.h",
+        "objc/api/peerconnection/RTCFrameCryptor.h",
+        "objc/api/peerconnection/RTCFrameCryptor.mm",
+        "objc/api/peerconnection/RTCFrameCryptorKeyProvider+Private.h",
+        "objc/api/peerconnection/RTCFrameCryptorKeyProvider.h",
+        "objc/api/peerconnection/RTCFrameCryptorKeyProvider.mm",
         "objc/api/peerconnection/RTCIceCandidate+Private.h",
         "objc/api/peerconnection/RTCIceCandidate.h",
         "objc/api/peerconnection/RTCIceCandidate.mm",
@@ -991,6 +1055,12 @@ if (is_ios || is_mac) {
         "objc/api/peerconnection/RTCRtcpParameters+Private.h",
         "objc/api/peerconnection/RTCRtcpParameters.h",
         "objc/api/peerconnection/RTCRtcpParameters.mm",
+        "objc/api/peerconnection/RTCRtpCapabilities.h",
+        "objc/api/peerconnection/RTCRtpCapabilities.mm",
+        "objc/api/peerconnection/RTCRtpCapabilities+Private.h",
+        "objc/api/peerconnection/RTCRtpCodecCapability.h",
+        "objc/api/peerconnection/RTCRtpCodecCapability.mm",
+        "objc/api/peerconnection/RTCRtpCodecCapability+Private.h",
         "objc/api/peerconnection/RTCRtpCodecParameters+Private.h",
         "objc/api/peerconnection/RTCRtpCodecParameters.h",
         "objc/api/peerconnection/RTCRtpCodecParameters.mm",
@@ -1050,6 +1120,7 @@ if (is_ios || is_mac) {
         ":videorendereradapter_objc",
         ":videosource_objc",
         ":videotoolbox_objc",
+        "../api/crypto:frame_crypto_transformer",
         "../api:dtmf_sender_interface",
         "../api:libjingle_peerconnection_api",
         "../api:media_stream_interface",
@@ -1288,12 +1359,17 @@ if (is_ios || is_mac) {
           "objc/components/video_frame_buffer/RTCCVPixelBuffer.h",
           "objc/helpers/RTCCameraPreviewView.h",
           "objc/helpers/RTCDispatcher.h",
+          "objc/helpers/RTCYUVHelper.h",
           "objc/helpers/UIDevice+RTCDevice.h",
+          "objc/api/peerconnection/RTCAudioDeviceModule.h",
+          "objc/api/peerconnection/RTCIODevice.h",
           "objc/api/peerconnection/RTCAudioSource.h",
           "objc/api/peerconnection/RTCAudioTrack.h",
           "objc/api/peerconnection/RTCConfiguration.h",
           "objc/api/peerconnection/RTCDataChannel.h",
           "objc/api/peerconnection/RTCDataChannelConfiguration.h",
+          "objc/api/peerconnection/RTCFrameCryptor.h",
+          "objc/api/peerconnection/RTCFrameCryptorKeyProvider.h",
           "objc/api/peerconnection/RTCFieldTrials.h",
           "objc/api/peerconnection/RTCIceCandidate.h",
           "objc/api/peerconnection/RTCIceCandidateErrorEvent.h",
@@ -1309,6 +1385,8 @@ if (is_ios || is_mac) {
           "objc/api/peerconnection/RTCPeerConnectionFactory.h",
           "objc/api/peerconnection/RTCPeerConnectionFactoryOptions.h",
           "objc/api/peerconnection/RTCRtcpParameters.h",
+          "objc/api/peerconnection/RTCRtpCapabilities.h",
+          "objc/api/peerconnection/RTCRtpCodecCapability.h",
           "objc/api/peerconnection/RTCRtpCodecParameters.h",
           "objc/api/peerconnection/RTCRtpEncodingParameters.h",
           "objc/api/peerconnection/RTCRtpHeaderExtension.h",
@@ -1334,6 +1412,9 @@ if (is_ios || is_mac) {
           "objc/api/video_codec/RTCVideoEncoderAV1.h",
           "objc/api/video_frame_buffer/RTCNativeI420Buffer.h",
           "objc/api/video_frame_buffer/RTCNativeMutableI420Buffer.h",
+          # Added for Simulcast support
+          "objc/components/video_codec/RTCVideoEncoderFactorySimulcast.h",
+          "objc/api/video_codec/RTCVideoEncoderSimulcast.h",
         ]
 
         if (!build_with_chromium) {
@@ -1400,6 +1481,8 @@ if (is_ios || is_mac) {
         output_name = "WebRTC"
 
         sources = [
+          "objc/api/peerconnection/RTCAudioDeviceModule.h",
+          "objc/api/peerconnection/RTCIODevice.h",
           "objc/api/peerconnection/RTCAudioSource.h",
           "objc/api/peerconnection/RTCAudioTrack.h",
           "objc/api/peerconnection/RTCCertificate.h",
@@ -1408,6 +1491,8 @@ if (is_ios || is_mac) {
           "objc/api/peerconnection/RTCDataChannel.h",
           "objc/api/peerconnection/RTCDataChannelConfiguration.h",
           "objc/api/peerconnection/RTCDtmfSender.h",
+          "objc/api/peerconnection/RTCFrameCryptor.h",
+          "objc/api/peerconnection/RTCFrameCryptorKeyProvider.h",
           "objc/api/peerconnection/RTCFieldTrials.h",
           "objc/api/peerconnection/RTCIceCandidate.h",
           "objc/api/peerconnection/RTCIceCandidateErrorEvent.h",
@@ -1423,6 +1508,8 @@ if (is_ios || is_mac) {
           "objc/api/peerconnection/RTCPeerConnectionFactory.h",
           "objc/api/peerconnection/RTCPeerConnectionFactoryOptions.h",
           "objc/api/peerconnection/RTCRtcpParameters.h",
+          "objc/api/peerconnection/RTCRtpCapabilities.h",
+          "objc/api/peerconnection/RTCRtpCodecCapability.h",
           "objc/api/peerconnection/RTCRtpCodecParameters.h",
           "objc/api/peerconnection/RTCRtpEncodingParameters.h",
           "objc/api/peerconnection/RTCRtpHeaderExtension.h",
@@ -1466,6 +1553,10 @@ if (is_ios || is_mac) {
           "objc/base/RTCYUVPlanarBuffer.h",
           "objc/components/capturer/RTCCameraVideoCapturer.h",
           "objc/components/capturer/RTCFileVideoCapturer.h",
+          "objc/components/capturer/RTCDesktopCapturer.h",
+          "objc/components/capturer/RTCDesktopSource.h",
+          "objc/components/capturer/RTCDesktopMediaList.h",
+          "objc/components/renderer/metal/RTCMTLVideoView.h",
           "objc/components/renderer/metal/RTCMTLNSVideoView.h",
           "objc/components/renderer/opengl/RTCVideoViewShading.h",
           "objc/components/video_codec/RTCCodecSpecificInfoH264.h",
@@ -1478,6 +1569,10 @@ if (is_ios || is_mac) {
           "objc/components/video_codec/RTCVideoEncoderH264.h",
           "objc/components/video_frame_buffer/RTCCVPixelBuffer.h",
           "objc/helpers/RTCDispatcher.h",
+          "objc/helpers/RTCYUVHelper.h",
+          # Added for Simulcast support
+          "objc/components/video_codec/RTCVideoEncoderFactorySimulcast.h",
+          "objc/api/video_codec/RTCVideoEncoderSimulcast.h",
         ]
         if (!build_with_chromium) {
           sources += [
@@ -1493,6 +1588,7 @@ if (is_ios || is_mac) {
           ":native_video",
           ":peerconnectionfactory_base_objc",
           ":videocapture_objc",
+          ":desktopcapture_objc",
           ":videocodec_objc",
           ":videotoolbox_objc",
         ]

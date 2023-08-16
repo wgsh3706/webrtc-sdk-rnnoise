@@ -29,8 +29,15 @@ DataChannelController::~DataChannelController() {
 }
 
 bool DataChannelController::HasDataChannels() const {
-  RTC_DCHECK_RUN_ON(signaling_thread());
-  return channel_usage_ == DataChannelUsage::kInUse;
+  auto has_channels = [&] {
+    RTC_DCHECK_RUN_ON(network_thread());
+    return !sctp_data_channels_n_.empty();
+  };
+
+  if (network_thread()->IsCurrent())
+    return has_channels();
+
+  return network_thread()->BlockingCall(std::move(has_channels));
 }
 
 bool DataChannelController::HasUsedDataChannels() const {

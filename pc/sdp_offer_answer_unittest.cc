@@ -549,6 +549,7 @@ TEST_F(SdpOfferAnswerTest, RejectedDataChannelsDoGetReofferedWhenActive) {
 
 #endif  // WEBRTC_HAVE_SCTP
 
+<<<<<<< HEAD
 TEST_F(SdpOfferAnswerTest, SimulcastAnswerWithNoRidsIsRejected) {
   auto pc = CreatePeerConnection();
 
@@ -677,4 +678,6 @@ TEST_F(SdpOfferAnswerTest, DuplicateSsrcsDisallowedInLocalDescription) {
   EXPECT_FALSE(pc->SetLocalDescription(std::move(offer)));
 }
 
+=======
+>>>>>>> kairtc-m114
 }  // namespace webrtc
